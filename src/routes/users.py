@@ -18,7 +18,7 @@ async def signup(
     db: Session = Depends(get_db)
     ) -> UserResponse:
 
-    exist_user = await UsersDB(db = db).get_user(username = body.username)
+    exist_user = await UsersDB(db = db).get_user(email = body.email)
     
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
@@ -34,7 +34,7 @@ async def login(
     db: Session = Depends(get_db)
     ) -> TokenModel:
 
-    user = await UsersDB(db = db).get_user(username = body.username)
+    user = await UsersDB(db = db).get_user(email = body.username)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
