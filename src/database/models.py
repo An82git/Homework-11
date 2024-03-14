@@ -21,8 +21,10 @@ class Users(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement="auto")
     username: Mapped[str]
-    email: Mapped[str] = mapped_column(nullable=True)
+    email: Mapped[str]
     phone_number: Mapped[str] = mapped_column(nullable=True)
     password: Mapped[str]
+    avatar: Mapped[str] = mapped_column(nullable=True)
     created_at = mapped_column(DateTime)
     refresh_token: Mapped[str] = mapped_column(nullable=True)
+    confirmed: Mapped[bool] = mapped_column(default=False)

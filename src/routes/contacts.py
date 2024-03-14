@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
 
@@ -12,7 +13,7 @@ from src.database.db import get_db
 router = APIRouter(prefix='/contacts', tags=["contacts"])
 
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(RateLimiter(times=4, seconds=1))])
 async def get_contacts(
     name: str = "",
     surname: str = "",
@@ -25,7 +26,7 @@ async def get_contacts(
     return {"contacts": contacts}
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=1, minutes=1))])
 async def create_contact(
     contact: ContactModel,
     db: Session = Depends(get_db),
@@ -36,7 +37,7 @@ async def create_contact(
     return {"contact": new_contact, "detail": "Contact successfully created"}
 
 
-@router.get("/{contact_id}")
+@router.get("/{contact_id}", dependencies=[Depends(RateLimiter(times=4, seconds=1))])
 async def get_contact(
     contact_id: int,
     db: Session = Depends(get_db),
@@ -51,7 +52,7 @@ async def get_contact(
     return contact
 
 
-@router.put("/{contact_id}")
+@router.put("/{contact_id}", dependencies=[Depends(RateLimiter(times=1, minutes=1))])
 async def update_contact(
     contact_id: int,
     contact: ContactModel,
@@ -79,7 +80,7 @@ async def delete_contact(
     return {"detail": "Contact successfully deleted"}
 
 
-@router.get("/birthdays/{days_to_birthday}")
+@router.get("/birthdays/{days_to_birthday}", dependencies=[Depends(RateLimiter(times=4, seconds=1))])
 async def get_contacts_by_birthday(
     days_to_birthday: int,
     db: Session = Depends(get_db),

@@ -1,68 +1,39 @@
-from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
-from fastapi import APIRouter, HTTPException, Depends, status, Security
+from fastapi import APIRouter, Depends, status, UploadFile, File
 from sqlalchemy.orm import Session
+import cloudinary
+import cloudinary.uploader
 
-from src.schemas import UserSingupModel, UserResponse, TokenModel
-from src.services.auth import auth_service
-from src.repository.users import UsersDB
 from src.database.db import get_db
+from src.database.models import Users
+from src.repository.users import UsersDB
+from src.services.auth import auth_service
+from src.conf.config import settings
+from src.schemas import UserModel
+
+router = APIRouter(prefix="/users", tags=["users"])
 
 
-router = APIRouter(prefix='/users', tags=["users"])
-security = HTTPBearer()
+@router.get("/me/")
+async def read_users_me(current_user: Users = Depends(auth_service.get_current_user)) -> UserModel:
+    return current_user
 
 
-@router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(
-    body: UserSingupModel,
+@router.patch('/avatar')
+async def update_avatar_user(
+    file: UploadFile = File(),
+    current_user: Users = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db)
-    ) -> UserResponse:
+    ) -> UserModel:
 
-    exist_user = await UsersDB(db = db).get_user(email = body.email)
-    
-    if exist_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
-    
-    body.password = auth_service.get_password_hash(body.password)
-    new_user = await UsersDB(db = db).create_user(body)
-    return {"user": new_user, "detail": "User successfully created"}
+    cloudinary.config(
+        cloud_name = settings.cloudinary_name,
+        api_key = settings.cloudinary_api_key,
+        api_secret = settings.cloudinary_api_secret,
+        secure = True
+    )
 
-
-@router.post("/login")
-async def login(
-    body: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-    ) -> TokenModel:
-
-    user = await UsersDB(db = db).get_user(email = body.username)
-
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email")
-    
-    if not auth_service.verify_password(body.password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
-    
-    access_token = await auth_service.create_access_token(data={"sub": str(user.id)})
-    refresh_token = await auth_service.create_refresh_token(data={"sub": str(user.id)})
-    await UsersDB(db = db).update_token(user, refresh_token)
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
-
-
-@router.get('/refresh_token')
-async def refresh_token(
-    credentials: HTTPAuthorizationCredentials = Security(security),
-    db: Session = Depends(get_db)
-    ) -> TokenModel:
-    
-    token = credentials.credentials
-    id = await auth_service.decode_refresh_token(token)
-    user = await UsersDB(db = db).get_user(id = int(id))
-    
-    if user.refresh_token != token:
-        await UsersDB(db = db).update_token(user, None)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-
-    access_token = await auth_service.create_access_token(data={"sub": id})
-    refresh_token = await auth_service.create_refresh_token(data={"sub": id})
-    await UsersDB(db = db).update_token(user, refresh_token)
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    r = cloudinary.uploader.upload(file.file, public_id=f'ContactsApp/{current_user.username}', overwrite=True)
+    src_url = cloudinary.CloudinaryImage(f'ContactsApp/{current_user.username}')\
+                        .build_url(width=250, height=250, crop='fill', version=r.get('version'))
+    user = await UsersDB(db = db).update_avatar(current_user.id, src_url)
+    return user

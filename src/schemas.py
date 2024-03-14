@@ -46,7 +46,7 @@ class DeleteContact(BaseModel):
 
 class UserSingupModel(BaseModel):
     username: str
-    email: Optional[str] = None
+    email: str
     phone_number: Optional[int] = None
     password: str
 
@@ -57,9 +57,11 @@ class UserSingupModel(BaseModel):
 class UserModel(BaseModel):
     id: int
     username: str
-    email: Optional[str] = None
+    email: str
     phone_number: Optional[str] = None
     created_at: datetime
+    avatar: Optional[str] = None
+    confirmed: bool
 
     @validator('phone_number')
     def validate_phone_number(cls, phone_number):
@@ -73,3 +75,9 @@ class TokenModel(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+class RequestEmail(BaseModel):
+    email: EmailStr
+
+class StringResponse(BaseModel):
+    message: str
