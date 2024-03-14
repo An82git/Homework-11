@@ -23,7 +23,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 origins = [ 
-    "http://localhost:3000"
+    "*"
     ]
 
 
