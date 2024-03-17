@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 import cloudinary
 import cloudinary.uploader
@@ -15,6 +15,14 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me/")
 async def read_users_me(current_user: Users = Depends(auth_service.get_current_user)) -> UserModel:
+    """
+    Get the details of the current logged-in user.
+
+    :param current_user: Current user object.
+    :type current_user: Users
+    :return: Details of the current user.
+    :rtype: UserModel
+    """
     return current_user
 
 
@@ -24,6 +32,18 @@ async def update_avatar_user(
     current_user: Users = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db)
     ) -> UserModel:
+    """
+    Update the avatar of the current logged-in user.
+
+    :param file: Uploaded image file for the avatar.
+    :type file: UploadFile
+    :param current_user: Current user object.
+    :type current_user: Users
+    :param db: Database session dependency.
+    :type db: Session
+    :return: Updated user object with the new avatar URL.
+    :rtype: UserModel
+    """
 
     cloudinary.config(
         cloud_name = settings.cloudinary_name,

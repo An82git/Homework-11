@@ -20,6 +20,21 @@ async def signup(
     request: Request,
     db: Session = Depends(get_db)
     ) -> UserResponse:
+    """
+    Endpoint to sign up a new user.
+
+    :param background_tasks: BackgroundTasks instance for running tasks asynchronously.
+    :type background_tasks: BackgroundTasks
+    :param body: User signup data.
+    :type body: UserSingupModel
+    :param request: FastAPI Request instance.
+    :type request: Request
+    :param db: Database session dependency.
+    :type db: Session
+    :return: Response containing the newly created user details.
+    :rtype: UserResponse
+    :raises HTTPException 409: If the account already exists.
+    """
 
     exist_user = await UsersDB(db = db).get_user(email = body.email)
     
@@ -38,6 +53,17 @@ async def login(
     body: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
     ) -> TokenModel:
+    """
+    Endpoint for user login.
+
+    :param body: OAuth2PasswordRequestForm containing username and password.
+    :type body: OAuth2PasswordRequestForm
+    :param db: Database session dependency.
+    :type db: Session
+    :return: Response containing access and refresh tokens.
+    :rtype: TokenModel
+    :raises HTTPException 401: If the username or password is invalid, or the email is not confirmed.
+    """
 
     user = await UsersDB(db = db).get_user(username = body.username)
 
@@ -61,7 +87,18 @@ async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db)
     ) -> TokenModel:
-    
+    """
+    Endpoint for refreshing access token using refresh token.
+
+    :param credentials: HTTPAuthorizationCredentials containing the refresh token.
+    :type credentials: HTTPAuthorizationCredentials
+    :param db: Database session dependency.
+    :type db: Session
+    :return: Response containing new access and refresh tokens.
+    :rtype: TokenModel
+    :raises HTTPException 401: If the refresh token is invalid.
+    """
+
     token = credentials.credentials
     id = await auth_service.decode_refresh_token(token)
     user = await UsersDB(db = db).get_user(id = int(id))
@@ -78,6 +115,18 @@ async def refresh_token(
 
 @router.get('/confirmed_email/{token}')
 async def confirmed_email(token: str, db: Session = Depends(get_db)) -> StringResponse:
+    """
+    Endpoint for confirming user email using token.
+
+    :param token: Confirmation token.
+    :type token: str
+    :param db: Database session dependency.
+    :type db: Session
+    :return: Response indicating email confirmation status.
+    :rtype: StringResponse
+    :raises HTTPException 400: If there's an error during verification.
+    """
+
     email = await auth_service.get_email_from_token(token)
     user = await UsersDB(db = db).get_user(email = email)
     
@@ -98,6 +147,20 @@ async def request_email(
     request: Request,
     db: Session = Depends(get_db)
     ) -> StringResponse:
+    """
+    Endpoint for resend confirmation email if email is not confirmed.
+
+    :param body: RequestEmail containing email.
+    :type body: RequestEmail
+    :param background_tasks: BackgroundTasks instance for running tasks asynchronously.
+    :type background_tasks: BackgroundTasks
+    :param request: FastAPI Request instance.
+    :type request: Request
+    :param db: Database session dependency.
+    :type db: Session
+    :return: Response indicating email confirmation status or request to check email for confirmation.
+    :rtype: StringResponse
+    """
 
     user = await UsersDB(db = db).get_user(email = body.email)
 

@@ -4,6 +4,16 @@ from typing import Optional
 
 
 def valid_number(phone_number: str | None):
+    """
+    Validates the phone number and returns it in international format if valid.
+
+    :param phone_number: Phone number to validate.
+    :type phone_number: str | None
+    :return: Validated phone number in international format.
+    :rtype: str
+    :raises ValueError: If the phone number is invalid.
+    """
+    
     if phone_number:
         number = phone_number.removeprefix("+")
         

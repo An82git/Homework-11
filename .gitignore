@@ -8,5 +8,9 @@
 /src/repository/__pycache__
 /src/routes/__pycache__
 /src/services/__pycache__
+/tests/__pycache__
+/tests/repository/__pycache__
+/tests/routes/__pycache__
 /postgres-data
+/postgres-data-test
 .env

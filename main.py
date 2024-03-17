@@ -11,6 +11,12 @@ from src.conf.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Asynchronous context manager for setting up lifespan events.
+
+    :param app: FastAPI application instance.
+    :type app: FastAPI
+    """
     r = await redis.Redis(
         host = settings.redis_host,
         port = settings.redis_port
